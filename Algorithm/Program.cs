@@ -10,10 +10,10 @@ namespace Algorithm
 		static void Main(string[] args)
 		{
 			// Задаем параметры генетического алгоритма
-			int populationSize = 10000;
-			double mutationRate = 0.01;
-			int generations = 100;
-			int genomeLength = 3; // Длина генома
+			int populationSize = 1000;
+			double mutationRate = 0.1;
+			int generations = 10000;
+			int genomeLength = 500; // Длина генома
 			Func<double[], double> fitnessFunction = (genome) =>
 			{
 				// Пример функции приспособленности: сумма генов
