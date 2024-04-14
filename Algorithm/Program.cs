@@ -1,18 +1,51 @@
-﻿using System;
+﻿using KanalTracer;
+using KanalTracer.Infrastructure;
+using KanalTracer.Services;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using WindowsFormsApp1.Infrastructure;
 
 
 namespace Algorithm
 {
 	public class Program
 	{
+		static Crystall_ELIB crystal = new Crystall_ELIB();
+		
 		static void Main(string[] args)
 		{
+			// Задаем параметры кристалла
+			crystal.countOfMagistrals = 4;
+			crystal.Lenght = 19;
+			crystal.Scheme = new Scheme();
+			crystal.Scheme.Connections = new List<Connection> {};
+
+			crystal.Scheme.Components = new List<Component>
+			{
+				new Component {ComponentId = 1, Name="cpu1t", Position = new Position {X = 1, Y = 1 }, ConnectionComponentId  = 6},
+				new Component {ComponentId = 2, Name="cpu4b", Position = new Position {X = 2, Y = -1 }, ConnectionComponentId  = 8},
+				new Component {ComponentId = 3, Name="cpu3t", Position = new Position {X = 3, Y = 1 }, ConnectionComponentId  = 7},
+				new Component {ComponentId = 4, Name="cpu2b", Position = new Position {X = 4, Y = -1 }, ConnectionComponentId  = 5},
+				new Component {ComponentId = 5, Name="cpu2t", Position = new Position {X = 6, Y = 1 }, ConnectionComponentId  = 4},
+				new Component {ComponentId = 6, Name="cpu1b", Position = new Position {X = 11, Y = -1 }, ConnectionComponentId  = 1},
+				new Component {ComponentId = 7, Name="cpu3t", Position = new Position {X = 11, Y = 1 }, ConnectionComponentId  = 3},
+				new Component {ComponentId = 8, Name="cpu4t", Position = new Position {X = 18, Y = 1 }, ConnectionComponentId  = 2},
+			};
+
+			for (int i = 0; i < crystal.countOfMagistrals; i++)
+			{
+				crystal.Magistrals.Add(new Magistral(i+1, crystal.Lenght));
+			}
+
+
+
+			// Размещаем в разброс соединения
+			Connecting();
 			// Задаем параметры генетического алгоритма
 			int populationSize = 1000;
 			double mutationRate = 0.1;
-			int generations = 10000;
+			int generations = 1000000;
 			int genomeLength = 500; // Длина генома
 			Func<double[], double> fitnessFunction = (genome) =>
 			{
@@ -25,20 +58,152 @@ namespace Algorithm
 				return sum;
 			};
 
-			// Создаем экземпляр генетического алгоритма
-			GeneticAlgorithm ga = new GeneticAlgorithm(populationSize, mutationRate, generations, genomeLength, fitnessFunction);
+			//// Создаем экземпляр генетического алгоритма
+			//GeneticAlgorithm ga = new GeneticAlgorithm(populationSize, mutationRate, generations, genomeLength, fitnessFunction);
 
-			// Запускаем генетический алгоритм
-			double[] result = ga.Run();
+			//// Запускаем генетический алгоритм
+			//double[] result = ga.Run();
 
-			// Выводим результат
-			Console.WriteLine("Best solution found:");
-			foreach (var gene in result)
-			{
-				Console.Write(gene + " ");
-			}
-			Console.WriteLine();
+			//// Выводим результат
+			//Console.WriteLine("Best solution found:");
+			//foreach (var gene in result)
+			//{
+			//	Console.Write(gene + " ");
+			//}
+			//Console.WriteLine();
 			
+		}
+
+
+		static void Connecting ()
+		{
+			Component comp1 = new Component();
+			Component comp2 = new Component();
+			// кол-во компонентов/2 = кол-во соединений
+			for (int i = 0; i < crystal.Scheme.Components.Count /2; i++)
+			{
+				//выбрали 1-ый компонент
+				for (int j = 0; j < crystal.Scheme.Components.Count; j++)
+				{
+					comp1 = crystal.Scheme.Components[j];
+					// выполняется, если компонент соединен
+					if (!comp1.IsConnected)
+					{
+						for (int m = 0; m < crystal.Scheme.Components.Count; m++)
+						{
+							if (crystal.Scheme.Components[m].ComponentId == comp1.ConnectionComponentId)
+							{
+								comp2 = crystal.Scheme.Components[m];
+								break;
+							}
+						}
+
+						PlaceConnection(comp1, comp2);
+
+						Console.WriteLine("Вывод результатов");
+						Print(crystal);
+						comp1.IsConnected = true;
+						comp2.IsConnected = true;
+						break;
+					}
+					
+					
+				}
+			}
+		}
+
+		static void Print (Crystall_ELIB crys)
+		{
+			foreach (var item in crys.Magistrals)
+			{
+				for (int i = 0; i < item.ELInMagistral.Length; i++)
+				{
+					Console.Write(item.ELInMagistral[i] + " ");
+                }
+                Console.WriteLine();
+            }
+		}
+
+		public static int ChooseMagistral (Component compFirst, Component compSecond)
+		{
+			Random rnd = new Random();
+			bool success = false;
+			int idMag = 0;
+			while (!success)
+			{
+				idMag = rnd.Next(crystal.countOfMagistrals) + 1;
+				for (int i = 0; i < crystal.countOfMagistrals; i++)
+				{
+					if (crystal.Magistrals[i].ID == idMag)
+					{
+						if (compFirst.Position.X > compSecond.Position.X && CheckMagistral(crystal.Magistrals[i], compSecond.Position.X, compFirst.Position.X))
+						{
+							success = true;
+							break;
+						}
+						else if (CheckMagistral(crystal.Magistrals[i], compFirst.Position.X, compSecond.Position.X))
+						{
+							success = true;
+							break;
+						}
+					}
+				}
+			}
+			
+			return idMag;
+		}
+
+		static void PlaceConnection(Component compStart, Component compEnd)
+		{
+			bool successConnecting = false;
+			Magistral currentMagistral = null;
+
+			int idMag = ChooseMagistral(compStart, compEnd);
+
+			for (int i = 0; i < crystal.countOfMagistrals; i++)
+			{
+				if (crystal.Magistrals[i].ID == idMag)
+				{
+					currentMagistral = crystal.Magistrals[i];
+				}
+			}
+
+			while (!successConnecting)
+			{
+
+				if (compStart.Position.X < compEnd.Position.X)
+				{
+					for (int i = compStart.Position.X - 1; i < compEnd.Position.X; i++)
+					{
+						currentMagistral.ELInMagistral[i] = compStart.ComponentId;
+					}
+					Connection.Path[crystal.Magistrals[idMag - 1]] = new int[2] { compStart.Position.X, compEnd.Position.X };
+				}
+				else if (compStart.Position.X > compEnd.Position.X)
+				{
+					for (int i = compEnd.Position.X - 1; i > compStart.Position.X; i++)
+					{
+						currentMagistral.ELInMagistral[i] = compStart.ComponentId;
+					}
+					Connection.Path[crystal.Magistrals[idMag - 1]] = new int[2] { compEnd.Position.X, compStart.Position.X };
+				}
+				successConnecting = true;
+				crystal.Magistrals[idMag - 1] = currentMagistral;
+				crystal.Scheme.Connections.Add(new Connection (compStart, compEnd));
+				
+			}
+		}
+
+		public static bool CheckMagistral (Magistral magistral, int firstPoint, int secondPoint)
+		{
+			int sum = 0;
+			for (int i = firstPoint; i <= secondPoint; i++)
+			{
+				if (magistral.ELInMagistral[i] != 0) sum++;
+			}
+
+			if (sum == 0) return true;
+			else return false;
 		}
 	}
 

@@ -12,17 +12,10 @@ namespace KanalTracer
 		/// <summary>
 		/// Компоненты, размещаемые на части кристалла
 		/// </summary>
-		public IEnumerable<Component> Components { get; set; }
+		public List<Component> Components { get; set; }
 		/// <summary>
 		/// Соединения, планируемые в схеме
 		/// </summary>
-		public IEnumerable<Connection> Connections { get; set; }
-
-
-
-
-
-
-
+		public List<Connection> Connections { get; set; }
 	}
 }

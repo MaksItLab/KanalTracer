@@ -1,9 +1,6 @@
 ﻿using KanalTracer.Infrastructure;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 
 namespace KanalTracer.Services
 {
@@ -23,7 +20,7 @@ namespace KanalTracer.Services
         /// <summary>
         /// Словарь, в котором содержится путь соединения вида "magistral" : [1,4].
         /// </summary>
-        public Dictionary<Magistral, int[]> Path = new Dictionary<Magistral, int[]>();
+        public static Dictionary<Magistral, int[]> Path = new Dictionary<Magistral, int[]>();
 
         public Connection(Component startComponent, Component endComponent)
         {

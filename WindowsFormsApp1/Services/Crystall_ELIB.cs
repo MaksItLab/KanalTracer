@@ -1,9 +1,6 @@
 ﻿using KanalTracer.Infrastructure;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 
 namespace KanalTracer
 {
@@ -15,7 +12,7 @@ namespace KanalTracer
 		/// <summary>
 		/// Количество магистралей в канале кристалла СБИС
 		/// </summary>
-		public int countOfMagistrals;
+		public int countOfMagistrals { get; set; }
 		/// <summary>
 		/// Длинна канала
 		/// </summary>
@@ -27,10 +24,7 @@ namespace KanalTracer
 		/// <summary>
 		/// Магистрали, размещаемые в канале СБИС
 		/// </summary>
-		public IEnumerable<Magistral> Magistrals { get; set; }
+		public List<Magistral> Magistrals { get; set; } = new List<Magistral>();
 
-
-
-
-	}
+    }
 }

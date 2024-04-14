@@ -20,7 +20,7 @@ namespace KanalTracer.Infrastructure
 		/// <summary>
 		/// Список позиций на магистрали
 		/// </summary>
-		public List<int> ELInMagistral = new List<int>();
+		public int[] ELInMagistral;
 
 		/// <summary>
 		/// Свойство длины магистрали
@@ -41,6 +41,7 @@ namespace KanalTracer.Infrastructure
 		{
 			_id = id;
 			_lenght = lenght;
+			ELInMagistral = new int[lenght];
 		}
 
 	}

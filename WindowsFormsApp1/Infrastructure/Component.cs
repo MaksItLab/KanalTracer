@@ -13,6 +13,10 @@ namespace KanalTracer.Services
 	public class Component
 	{
 		/// <summary>
+		/// Уникальный идентификатор компонента
+		/// </summary>
+		public int ComponentId { get; set; }
+		/// <summary>
 		/// Позиция компонента
 		/// </summary>
 		public Position Position { get; set; }
@@ -21,13 +25,13 @@ namespace KanalTracer.Services
 		/// </summary>
 		public string Name { get; set; }
 		/// <summary>
-		/// Уникальный идентификатор компонента
+		/// Идентификатор подключаемого компонента
 		/// </summary>
-		public int ConnectionId { get; set; }
+		public int ConnectionComponentId { get; set; }
 		/// <summary>
-		/// Подключаемый компонент
+		/// Проверяет, соединен компонент или нет
 		/// </summary>
-		public Component ConnectionComponent { get; set; }
+		public bool IsConnected { get; set; } = false;
 
 
 		public Component() { }
