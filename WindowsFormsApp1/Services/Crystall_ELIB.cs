@@ -14,6 +14,10 @@ namespace KanalTracer
 		/// </summary>
 		public int countOfMagistrals { get; set; }
 		/// <summary>
+		/// Количество свободных магистралей в канале кристалла СБИС
+		/// </summary>
+		public int countOfFreeMagistrals { get; set; }
+		/// <summary>
 		/// Длинна канала
 		/// </summary>
 		public int Lenght { get; set; }
