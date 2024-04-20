@@ -16,7 +16,8 @@ namespace Algorithm
 		{
 			Crystall_ELIB crystall = new Crystall_ELIB()
 			{
-				countOfMagistrals = 4,
+				countOfFreeMagistrals = 5,
+				countOfMagistrals = 5,
 				Lenght = 19,
 				Scheme = new Scheme()
 				{
@@ -36,13 +37,14 @@ namespace Algorithm
 				},
 				},
 				Magistrals =
-			{
-				new Magistral(1, 19),
-				new Magistral(2, 19),
-				new Magistral(3, 19),
-				new Magistral(4, 19),
+				{
+					new Magistral(1, 19),
+					new Magistral(2, 19),
+					new Magistral(3, 19),
+					new Magistral(4, 19),
+					new Magistral(5, 19),
 
-			},
+				},
 
 			};
 

@@ -164,6 +164,10 @@ namespace Algorithm
 
 			while (!successConnecting)
 			{
+				if (crystal.Magistrals[idMag - 1].ELInMagistral.Sum() == 0)
+				{
+					crystal.countOfFreeMagistrals -= 1;
+				}
 
 				if (compStart.Position.X < compEnd.Position.X)
 				{
@@ -184,6 +188,9 @@ namespace Algorithm
 				successConnecting = true;
 				crystal.Magistrals[idMag - 1] = currentMagistral;
 				crystal.Scheme.Connections.Add(new Connection(compStart, compEnd));
+
+				
+
 
 			}
 		}
@@ -237,7 +244,7 @@ namespace Algorithm
 				}
 			}
 			Console.WriteLine("Вывод результатов");
-			Print(crystal);
+			//Print(crystal);
 
 			return crystal;
 		}
@@ -314,7 +321,7 @@ namespace Algorithm
 			for (int generation = 0; generation < generations; generation++)
 			{
 				int[] fitnessValues = EvaluatePopulation(population);
-				double bestSolution = fitnessValues.Min();
+				int bestSolution = fitnessValues.Max();
 				int minIndex = Array.IndexOf(fitnessValues, bestSolution);
 
 				Console.WriteLine($"Generation {generation}: Best solution = {bestSolution}");
