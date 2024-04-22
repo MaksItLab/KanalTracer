@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using WindowsFormsApp1.Infrastructure;
 
 
@@ -18,7 +19,7 @@ namespace Algorithm
 			
 			// Размещаем в разброс соединения
 			// Задаем параметры генетического алгоритма
-			int populationSize = 1000;
+			int populationSize = 100;
 			double mutationRate = 0.1;
 			int generations = 100;
 			int genomeLength = 5; // Длина генома
@@ -85,7 +86,14 @@ namespace Algorithm
 			{
 				for (int i = 0; i < item.ELInMagistral.Length; i++)
 				{
-					Console.Write(item.ELInMagistral[i] + " ");
+					if (item.ELInMagistral[i] != 0)
+					{
+						Console.ForegroundColor = ConsoleColor.Green;
+						Console.Write($"{item.ELInMagistral[i],2} ");
+						Console.ResetColor();
+					}
+					else Console.Write($"{item.ELInMagistral[i],2} ");
+
 				}
 				Console.WriteLine();
 			}
@@ -98,6 +106,7 @@ namespace Algorithm
 			int idMag = 0;
 			while (!success)
 			{
+				Thread.Sleep(10);
 				idMag = rnd.Next(crystal.countOfMagistrals) + 1;
 				for (int i = 0; i < crystal.countOfMagistrals; i++)
 				{
@@ -137,6 +146,7 @@ namespace Algorithm
 
 			while (!successConnecting)
 			{
+				
 				if (crystal.Magistrals[idMag - 1].ELInMagistral.Sum() == 0)
 				{
 					crystal.countOfFreeMagistrals -= 1;
@@ -235,13 +245,15 @@ namespace Algorithm
 
 				component.IsConnected = true;
 				compConnection.IsConnected = true;
-			}
+				//Print(crystal);
+                //Console.WriteLine("-----------------------------------------------------------");
+            }
 
 			
-			Console.WriteLine("Вывод результатов");
-			Print(crystal);
-
-			return crystal;
+			//Console.WriteLine("Вывод результатов");
+			//Print(crystal);
+           
+            return crystal;
 		}
 
 		// Генерация начальной популяции
@@ -274,23 +286,30 @@ namespace Algorithm
 		// Скрещивание
 		private Crystall_ELIB Crossover(Crystall_ELIB parent1, Crystall_ELIB parent2)
 		{
-			int crossoverPoint = random.Next(0, genomeLength);
-			Crystall_ELIB child = new Crystall_ELIB();
+			int crossoverPoint = random.Next(0, parent1.Scheme.Components.Count/2);
+			Crystall_ELIB child = Data.CreateCrystal();
 
 			//Процесс скрещивания
 
 
-			//for (int i = 0; i < crossoverPoint; i++)
-			//{
-			//	child[i] = parent1[i];
-			//}
-
-			//for (int i = crossoverPoint; i < genomeLength; i++)
-			//{
-			//	child[i] = parent2[i];
-			//}
-
+			for (int i = 0; i < crossoverPoint; i++)
+			{
+				child.Scheme.Connections.Add(parent1.Scheme.Connections[i]);
+			}
+			child = FillElInMagistral(ref child, parent1);
+			for (int i = crossoverPoint; i < genomeLength; i++)
+			{
+				child.Scheme.Connections.Add(parent2.Scheme.Connections[i]);
+			}
+            Console.WriteLine("Ребенок: ");
+            Print(child);
 			return child;
+		}
+
+		public Crystall_ELIB FillElInMagistral (ref Crystall_ELIB crys, Crystall_ELIB parent)
+		{
+			
+			return null;
 		}
 
 		// Мутация
@@ -320,7 +339,7 @@ namespace Algorithm
 				int minIndex = Array.IndexOf(fitnessValues, bestSolution);
 
 				Console.WriteLine($"Generation {generation}: Best solution = {bestSolution}");
-
+				Print(population[minIndex]);
 				
 
 				List<Crystall_ELIB> newPopulation = new List<Crystall_ELIB>();
@@ -330,7 +349,12 @@ namespace Algorithm
 					int parentIndex1 = RouletteWheelSelection(fitnessValues);
 					int parentIndex2 = RouletteWheelSelection(fitnessValues);
 
-					Crystall_ELIB child1 = Crossover(population[parentIndex1], population[parentIndex2]);
+                    Console.WriteLine("Parent 1:");
+					Print(population[parentIndex1]);
+					Console.WriteLine("Parent 2:");
+					Print(population[parentIndex2]);
+
+                    Crystall_ELIB child1 = Crossover(population[parentIndex1], population[parentIndex2]);
 					Crystall_ELIB child2 = Crossover(population[parentIndex2], population[parentIndex1]);
 
 					Mutate(ref child1);
