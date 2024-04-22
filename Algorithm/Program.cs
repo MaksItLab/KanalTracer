@@ -12,37 +12,10 @@ namespace Algorithm
 {
 	public class Program
 	{
-		//static Crystall_ELIB crystal = new Crystall_ELIB();
 		
 		static void Main(string[] args)
 		{
-			// Задаем параметры кристалла
-			//crystal.countOfMagistrals = 4;
-			//crystal.Lenght = 19;
-			//crystal.Scheme = new Scheme();
-			//crystal.Scheme.Connections = new List<Connection> {};
-
-			//crystal.Scheme.Components = new List<Component>
-			//{
-			//	new Component {ComponentId = 1, Name="cpu1t", Position = new Position {X = 1, Y = 1 }, ConnectionComponentId  = 7},
-			//	new Component {ComponentId = 2, Name="cpu4b", Position = new Position {X = 2, Y = -1 }, ConnectionComponentId  = 10},
-			//	new Component {ComponentId = 3, Name="cpu3t", Position = new Position {X = 3, Y = 1 }, ConnectionComponentId  = 8},
-			//	new Component {ComponentId = 4, Name="cpu2b", Position = new Position {X = 4, Y = -1 }, ConnectionComponentId  = 6},
-			//	new Component {ComponentId = 5, Name="cpu5t", Position = new Position {X = 14, Y = 1 }, ConnectionComponentId  = 9},
-			//	new Component {ComponentId = 6, Name="cpu2t", Position = new Position {X = 6, Y = 1 }, ConnectionComponentId  = 4},
-			//	new Component {ComponentId = 7, Name="cpu1b", Position = new Position {X = 11, Y = -1 }, ConnectionComponentId  = 1},
-			//	new Component {ComponentId = 8, Name="cpu3t", Position = new Position {X = 11, Y = 1 }, ConnectionComponentId  = 3},
-			//	new Component {ComponentId = 9, Name="cpu5b", Position = new Position {X = 17, Y = -1 }, ConnectionComponentId  = 5},
-			//	new Component {ComponentId = 10, Name="cpu4t", Position = new Position {X = 18, Y = 1 }, ConnectionComponentId  = 2},
-			//};
-
-			//for (int i = 0; i < crystal.countOfMagistrals; i++)
-			//{
-			//	crystal.Magistrals.Add(new Magistral(i+1, crystal.Lenght));
-			//}
-
-
-
+			
 			// Размещаем в разброс соединения
 			// Задаем параметры генетического алгоритма
 			int populationSize = 1000;
@@ -207,44 +180,66 @@ namespace Algorithm
 			else return false;
 		}
 
-		//соединение
-		Crystall_ELIB Connecting(Crystall_ELIB crystal)
+		/// <summary>
+		/// Возвращает компоненты с уникальными номерами, отсортированными по увеличению координаты X
+		/// </summary>
+		/// <param name="components"></param>
+		/// <returns></returns>
+		public List<Component> GetDistinctComponents (List<Component> components)
 		{
-			Component comp1 = new Component();
-			Component comp2 = new Component();
-			// кол-во компонентов/2 = кол-во соединений
-			for (int i = 0; i < crystal.Scheme.Components.Count / 2; i++)
+			List<Component> comps = new List<Component>();
+			
+			List<string> allNames = components.Select(p => p.Name).ToList();
+			List<string> names = new List<string>();
+
+			foreach (var name in allNames)
 			{
-				//выбрали 1-ый компонент
-				for (int j = 0; j < crystal.Scheme.Components.Count; j++)
+				if (!names.Contains(name))
 				{
-					comp1 = crystal.Scheme.Components[j];
-					// выполняется, если компонент не соединен
-					if (!comp1.IsConnected)
-					{
-						for (int m = 0; m < crystal.Scheme.Components.Count; m++)
-						{
-							if (crystal.Scheme.Components[m].ComponentId == comp1.ConnectionComponentId)
-							{
-								comp2 = crystal.Scheme.Components[m];
-								break;
-							}
-						}
-
-						PlaceConnection(comp1, comp2, crystal);
-
-						
-						
-						comp1.IsConnected = true;
-						comp2.IsConnected = true;
-						break;
-					}
-
-
+					names.Add(name);
 				}
 			}
+
+			foreach (var item in components)
+			{
+				if(names.Contains(item.Name))
+				{
+					comps.Add(item);
+					names.Remove(item.Name);
+				}
+			}
+
+
+			return comps;
+		}
+
+		/// <summary>
+		/// Соединяет компоненты на кристалле СБИС
+		/// </summary>
+		/// <param name="crystal"></param>
+		/// <returns></returns>
+		Crystall_ELIB Connecting(Crystall_ELIB crystal)
+		{
+			List<Component> allComponent = crystal.Scheme.Components.OrderBy(p => p.Position.X).ToList();
+			
+			List<Component> components = GetDistinctComponents(allComponent);
+			
+
+			//Component comp1 = new Component();
+			//Component comp2 = new Component();
+
+			foreach (var component in components)
+			{
+				Component compConnection = allComponent.FirstOrDefault(c => c.ComponentId == component.ConnectionComponentId);
+				PlaceConnection(component, compConnection, crystal);
+
+				component.IsConnected = true;
+				compConnection.IsConnected = true;
+			}
+
+			
 			Console.WriteLine("Вывод результатов");
-			//Print(crystal);
+			Print(crystal);
 
 			return crystal;
 		}
