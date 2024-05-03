@@ -17,10 +17,11 @@ namespace KanalTracer.Services
         /// Конечный компонент
         /// </summary>
 		public Component endComponent;
+        
         /// <summary>
-        /// Словарь, в котором содержится путь соединения вида "magistral" : [1,4].
+        /// Идентификатор магистрали
         /// </summary>
-        public static Dictionary<Magistral, int[]> Path = new Dictionary<Magistral, int[]>();
+        public int MagisralId {  get; set; }
 
         public Connection(Component startComponent, Component endComponent)
         {

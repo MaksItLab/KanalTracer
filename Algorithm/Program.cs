@@ -19,10 +19,10 @@ namespace Algorithm
 			
 			// Размещаем в разброс соединения
 			// Задаем параметры генетического алгоритма
-			int populationSize = 100;
+			int populationSize = 15;
 			double mutationRate = 0.1;
 			int generations = 100;
-			int genomeLength = 5; // Длина генома
+			int genomeLength = 6; // Длина генома
 			Func<Crystall_ELIB, int> fitnessFunction = (crystal) =>
 			{
 				// Пример функции приспособленности: сумма генов
@@ -106,7 +106,7 @@ namespace Algorithm
 			int idMag = 0;
 			while (!success)
 			{
-				Thread.Sleep(10);
+				Thread.Sleep(5);
 				idMag = rnd.Next(crystal.countOfMagistrals) + 1;
 				for (int i = 0; i < crystal.countOfMagistrals; i++)
 				{
@@ -152,13 +152,20 @@ namespace Algorithm
 					crystal.countOfFreeMagistrals -= 1;
 				}
 
+
+				successConnecting = true;
+				crystal.Magistrals[idMag - 1] = currentMagistral;
+
+				Connection newConn = new Connection(compStart, compEnd);
+				newConn.MagisralId = idMag;
+
 				if (compStart.Position.X < compEnd.Position.X)
 				{
 					for (int i = compStart.Position.X - 1; i < compEnd.Position.X; i++)
 					{
 						currentMagistral.ELInMagistral[i] = compStart.ComponentId;
 					}
-					Connection.Path[crystal.Magistrals[idMag - 1]] = new int[2] { compStart.Position.X, compEnd.Position.X };
+					currentMagistral.Path[newConn] = new int[2] { compStart.Position.X, compEnd.Position.X };
 				}
 				else if (compStart.Position.X > compEnd.Position.X)
 				{
@@ -166,15 +173,12 @@ namespace Algorithm
 					{
 						currentMagistral.ELInMagistral[i] = compStart.ComponentId;
 					}
-					Connection.Path[crystal.Magistrals[idMag - 1]] = new int[2] { compEnd.Position.X, compStart.Position.X };
+					currentMagistral.Path[newConn] = new int[2] { compEnd.Position.X, compStart.Position.X };
 				}
-				successConnecting = true;
-				crystal.Magistrals[idMag - 1] = currentMagistral;
-				crystal.Scheme.Connections.Add(new Connection(compStart, compEnd));
-
 				
-
-
+				crystal.Scheme.Connections.Add(newConn);
+				crystal.Magistrals[idMag - 1].Connections.Add(newConn);
+				
 			}
 		}
 
@@ -288,31 +292,211 @@ namespace Algorithm
 		{
 			int crossoverPoint = random.Next(0, parent1.Scheme.Components.Count/2);
 			Crystall_ELIB child = Data.CreateCrystal();
+			HashSet<Connection> hashDistinctConnections = new HashSet<Connection>();
 
-			//Процесс скрещивания
+
+			//сортировка родителей по магистралям
+			parent1 = SortMagistrals(parent1);
+			parent2 = SortMagistrals(parent2);
+			Console.WriteLine("Отсортированный родитель 1: ");
+			Print(parent1);
+			Console.WriteLine("Отсортированный родитель 2: ");
+			Print(parent2);
 
 
+			//Процесс скрещивания, данные берутся от первого родителя
 			for (int i = 0; i < crossoverPoint; i++)
 			{
-				child.Scheme.Connections.Add(parent1.Scheme.Connections[i]);
+				child.Scheme.Connections.Add(new Connection(parent1.Scheme.Connections[i].startComponent, parent1.Scheme.Connections[i].endComponent) { });
+				child.Scheme.Connections[i].MagisralId = parent1.Scheme.Connections[i].MagisralId;
+				hashDistinctConnections.Add(child.Scheme.Connections[i]);
 			}
-			child = FillElInMagistral(ref child, parent1);
+
+			child = FillElInMagistralFromParentFirst(ref child, parent1, crossoverPoint);
+
+
+			//Процесс скрещивания, данные берутся от второго родителя
 			for (int i = crossoverPoint; i < genomeLength; i++)
 			{
-				child.Scheme.Connections.Add(parent2.Scheme.Connections[i]);
+				if (!hashDistinctConnections.Contains(parent2.Scheme.Connections[i]))
+				{
+					
+					child.Scheme.Connections.Add(new Connection(parent2.Scheme.Connections[i].startComponent, parent2.Scheme.Connections[i].endComponent) { });
+					child.Scheme.Connections[i].MagisralId = parent2.Scheme.Connections[i].MagisralId;
+					hashDistinctConnections.Add(child.Scheme.Connections[i]);
+				}
 			}
-            Console.WriteLine("Ребенок: ");
+
+			child = FillElInMagistralFromParentSecond(ref child, parent2, crossoverPoint);
+
+
+			Console.WriteLine("Ребенок: ");
             Print(child);
 			return child;
 		}
 
-		public Crystall_ELIB FillElInMagistral (ref Crystall_ELIB crys, Crystall_ELIB parent)
+		public Crystall_ELIB SortMagistrals(Crystall_ELIB crystal)
 		{
-			
-			return null;
+			Crystall_ELIB crystalSorted = Data.CreateCrystal();
+			List<Connection> connections = crystal.Scheme.Connections.Select(m => m).OrderBy(m => m.startComponent.Position.X).ToList();
+			foreach (var item in connections)
+			{
+				crystalSorted.Scheme.Connections.Add(new Connection(item.startComponent, item.endComponent) { MagisralId = item.MagisralId});
+			}
+
+			//crystalSorted.Scheme.Connections = connections; // присваивается ссылка
+
+			for (int i = 0; i < connections.Count; i++)
+			{
+				var query = crystal.Scheme.Connections.Where(m => m.MagisralId == connections[i].MagisralId).ToList();
+				if (query.Count > 1 && query.IndexOf(connections[i]) != 0) 
+				{
+					var conId = crystalSorted.Scheme.Connections.FirstOrDefault(con => con.startComponent == query[0].startComponent);
+					crystalSorted.Scheme.Connections[i].MagisralId = conId.MagisralId;
+
+					Component compStart = connections[i].startComponent;
+					Component compEnd = connections[i].endComponent;
+
+					if (compStart.Position.X < compEnd.Position.X)
+					{
+						for (int j = compStart.Position.X - 1; j < compEnd.Position.X; j++)
+						{
+							crystalSorted.Magistrals[conId.MagisralId-1].ELInMagistral[j] = compStart.ComponentId;
+						}
+						crystalSorted.Magistrals[conId.MagisralId-1].Path[crystalSorted.Scheme.Connections[i]] = new int[2] { compStart.Position.X, compEnd.Position.X };
+					}
+					else if (compStart.Position.X > compEnd.Position.X)
+					{
+						for (int j = compEnd.Position.X - 1; j > compStart.Position.X; j++)
+						{
+							crystalSorted.Magistrals[query[0].MagisralId-1].ELInMagistral[j] = compStart.ComponentId;
+						}
+						crystalSorted.Magistrals[query[0].MagisralId-1].Path[crystalSorted.Scheme.Connections[i]] = new int[2] { compEnd.Position.X, compStart.Position.X };
+					}
+					crystalSorted.Magistrals[query[0].MagisralId-1].Connections.Add(connections[i]);
+                    Console.WriteLine($"----------------------------Итерация {i}----------------------------");
+                    Print(crystalSorted);
+				}
+				else
+				{
+					crystalSorted.Scheme.Connections[i].MagisralId = i + 1;
+
+					Component compStart = connections[i].startComponent;
+					Component compEnd = connections[i].endComponent;
+
+					if (compStart.Position.X < compEnd.Position.X)
+					{
+						for (int j = compStart.Position.X - 1; j < compEnd.Position.X; j++)
+						{
+							crystalSorted.Magistrals[i].ELInMagistral[j] = compStart.ComponentId;
+						}
+						crystalSorted.Magistrals[i].Path[crystalSorted.Scheme.Connections[i]] = new int[2] { compStart.Position.X, compEnd.Position.X };
+					}
+					else if (compStart.Position.X > compEnd.Position.X)
+					{
+						for (int j = compEnd.Position.X - 1; j > compStart.Position.X; j++)
+						{
+							crystalSorted.Magistrals[i].ELInMagistral[j] = compStart.ComponentId;
+						}
+						crystalSorted.Magistrals[i].Path[crystalSorted.Scheme.Connections[i]] = new int[2] { compEnd.Position.X, compStart.Position.X };
+					}
+					crystalSorted.Magistrals[i].Connections.Add(connections[i]);
+
+					Console.WriteLine($"----------------------------Итерация {i}----------------------------");
+					Print(crystalSorted);
+				}
+
+			}
+
+			return crystalSorted;
 		}
 
-		// Мутация
+		public Crystall_ELIB FillElInMagistralFromParentSecond(ref Crystall_ELIB crys, Crystall_ELIB parent, int count)
+		{
+
+			List<int> idMags = crys.Scheme.Connections.Select(m => m.MagisralId).ToList(); // LINQ запрос на вытягивание всех id магистралей
+
+			//List<Magistral> magistrals = parent.Magistrals.Where(m => idMags.Contains(m.ID)).ToList(); // LINQ запрос на вытягивание магистралей, в которые были добавлены соединения
+
+			for (int i = count; i < idMags.Count; i++)
+			{
+				var magistral = parent.Magistrals.FirstOrDefault(m => m.ID == idMags[i]);
+
+				var conn = parent.Scheme.Connections.FirstOrDefault(id => id.MagisralId == magistral.ID);
+
+				int[] arrayStartEndPoints = magistral.Path[conn];
+				int start = arrayStartEndPoints[0];
+				int end = arrayStartEndPoints[1];
+
+
+
+				for (int j = start - 1; j < end; j++)
+				{
+					crys.Magistrals[parent.Scheme.Connections[i].MagisralId - 1].ELInMagistral[j] = conn.startComponent.ComponentId;
+				}
+
+
+
+				//Array.Copy(parent.Magistrals[parent.Scheme.Connections[i].MagisralId - 1].ELInMagistral, crys.Magistrals[crys.Scheme.Connections[i].MagisralId - 1].ELInMagistral, crys.Lenght);
+				
+				Console.WriteLine($"Ребенок, итерация: {i}: ");
+				Print(crys);
+			}
+			Console.WriteLine("Ребенок : ");
+			Print(crys);
+
+			return crys;
+		}
+
+
+		/// <summary>
+		/// Заполняет магистрали кристалла от первого родителя
+		/// </summary>
+		/// <param name="crys"></param>
+		/// <param name="parent"></param>
+		/// <param name="count"></param>
+		/// <returns></returns>
+		public Crystall_ELIB FillElInMagistralFromParentFirst(ref Crystall_ELIB crys, Crystall_ELIB parent, int count)
+		{
+			
+			List<int> idMags = crys.Scheme.Connections.Select(m => m.MagisralId).ToList(); // LINQ запрос на вытягивание id магистралей, в которые были добавлены соединения
+
+			//List<Magistral> magistrals = parent.Magistrals.Where(m => idMags.Contains(m.ID)).ToList(); // LINQ запрос на вытягивание магистралей, в которые были добавлены соединения
+
+			for (int i = 0; i < count; i++)
+			{
+				var magistral = parent.Magistrals.FirstOrDefault(m => m.ID == idMags[i]);
+
+				var conn = parent.Scheme.Connections.FirstOrDefault(id => id.MagisralId == magistral.ID);
+
+				int[] arrayStartEndPoints = magistral.Path[conn];
+				int start = arrayStartEndPoints[0];
+				int end = arrayStartEndPoints[1];
+
+
+
+				for (int j = start-1; j < end; j++)
+				{
+					crys.Magistrals[parent.Scheme.Connections[i].MagisralId - 1].ELInMagistral[j] = conn.startComponent.ComponentId;
+				}
+
+
+
+				//Array.Copy(parent.Magistrals[parent.Scheme.Connections[i].MagisralId - 1].ELInMagistral, crys.Magistrals[crys.Scheme.Connections[i].MagisralId - 1].ELInMagistral, crys.Lenght);
+				
+				//Console.WriteLine($"Ребенок, итерация: {i}: ");
+				//Print(crys);
+			}
+            Console.WriteLine("Ребенок : ");
+            Print(crys);
+			
+			return crys;
+		}
+
+		/// <summary>
+		/// Мутация
+		/// </summary>
+		/// <param name="genome"></param>
 		private void Mutate(ref Crystall_ELIB genome)
 		{
 			//процесс мутации
@@ -327,7 +511,12 @@ namespace Algorithm
 			//	}
 			//}
 		}
-		// Генетический алгоритм
+
+
+		/// <summary>
+		/// Генетический алгоритм
+		/// </summary>
+		/// <returns></returns>
 		public Crystall_ELIB Run()
 		{
 			List<Crystall_ELIB> population = GenerateInitialPopulation();
@@ -370,7 +559,11 @@ namespace Algorithm
 			return population[Array.IndexOf(EvaluatePopulation(population), EvaluatePopulation(population).Min())];
 		}
 
-		// Рулеточный отбор
+		/// <summary>
+		/// Рулеточный отбор	
+		/// </summary>
+		/// <param name="fitnessValues"></param>
+		/// <returns></returns>
 		private int RouletteWheelSelection(int[] fitnessValues)
 		{
 			int totalFitness = fitnessValues.Sum();

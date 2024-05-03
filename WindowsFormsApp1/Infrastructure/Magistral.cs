@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using KanalTracer.Services;
+using System.Collections.Generic;
 
 namespace KanalTracer.Infrastructure
 {
@@ -21,7 +22,14 @@ namespace KanalTracer.Infrastructure
 		/// Список позиций на магистрали
 		/// </summary>
 		public int[] ELInMagistral;
-
+		/// <summary>
+		/// Список соединений внутри магистрали
+		/// </summary>
+		public List<Connection> Connections = new List<Connection>();
+		/// <summary>
+		/// Словарь, в котором содержится пути магистрали вида "connection" : [1,4].
+		/// </summary>
+		public Dictionary<Connection, int[]> Path = new Dictionary<Connection, int[]>();
 		/// <summary>
 		/// Свойство длины магистрали
 		/// </summary>
